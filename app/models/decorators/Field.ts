@@ -1,6 +1,9 @@
 import type Model from "../base/Model";
 
-const fields = new Map<string, (string | number | symbol)[]>();
+// Keyed by the class itself rather than its name: minified builds mangle class
+// names, so two different models can end up sharing one, and a name-keyed
+// registry would hand one model the other's fields.
+const fields = new WeakMap<object, (string | number | symbol)[]>();
 
 /**
  * Returns the keys recorded as serializable fields on a model.
@@ -9,7 +12,7 @@ const fields = new Map<string, (string | number | symbol)[]>();
  * @returns the keys decorated with @Field.
  */
 export const getFieldsForModel = <T extends Model>(target: T) =>
-  getFieldsForModelClass(target.constructor);
+  getFieldsForModelClass(target.constructor as { name: string });
 
 /**
  * Returns the keys recorded as serializable fields on a model class.
@@ -18,7 +21,7 @@ export const getFieldsForModel = <T extends Model>(target: T) =>
  * @returns the keys decorated with @Field.
  */
 export function getFieldsForModelClass(model: { name: string }) {
-  return fields.get(model.name) ?? [];
+  return fields.get(model) ?? [];
 }
 
 /**
@@ -29,8 +32,8 @@ export function getFieldsForModelClass(model: { name: string }) {
  * @param propertyKey the key to record as a field.
  */
 const Field = (target: Model, propertyKey: string | symbol) => {
-  const className = target.constructor.name;
-  fields.set(className, [...(fields.get(className) ?? []), propertyKey]);
+  const modelClass = target.constructor;
+  fields.set(modelClass, [...(fields.get(modelClass) ?? []), propertyKey]);
 };
 
 export default Field;

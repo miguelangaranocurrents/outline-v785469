@@ -81,9 +81,11 @@ function PinnedDocuments({
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
+      // Start a drag only once the pointer actually moves. A time-based delay
+      // would turn a press-and-hold on a card into a drag, swallowing the click
+      // that opens the document.
       activationConstraint: {
-        delay: 100,
-        tolerance: 5,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
